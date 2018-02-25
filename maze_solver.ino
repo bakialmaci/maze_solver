@@ -1,3 +1,19 @@
+int maze [14][14] = {
+  {99,99,99,99,99,99,99,99,99,99,99,99,99,99},
+  {99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,99},
+  {99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,99},
+  {99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,99},
+  {99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,99},
+  {99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,99},
+  {99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,99},
+  {99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,99},
+  {99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,99},
+  {99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,99},
+  {99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,99},
+  {99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,99},
+  {99, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,99},
+  {99,99,99,99,99,99,99,99,99,99,99,99,99,99}
+  };
                       //Motors pin_IO
 #define IN_1 10
 #define IN_2 11   
@@ -19,6 +35,9 @@ long distance_f;
 long distance_r;
 long distance_l;
 int pid_pwm;
+
+int x = 1;
+int y = 1;
 
 void setup() 
 {
@@ -87,7 +106,71 @@ void handbrake()
    analogWrite(PWM_L,  255);  
   digitalWrite(IN_3, LOW);
   digitalWrite(IN_4,  LOW);
-delay(500);
+  delay(500);
+}
+
+void control_f()
+{
+  if(distance_f <= 10 || maze[x][y] == 99)
+  {
+    handbrake();
+    if(distance_r >= 15 || maze[x-1][y] != 99)
+    {
+      turn_r();
+      forward_r();
+    }
+    else if (distance_l >= 15 || maze[x+1][y] != 99)
+    {
+      turn_l();
+      forward_l();
+    }
+    else
+    {
+      turn_b();
+      forward_b();
+    }
+  }
+  else
+  {
+    forward();
+  }
+}
+
+void control_l()
+{
+  if(distance_f <= 10 || maze[x][y] == 99)
+  {
+    handbrake();
+    if(distance_r >= 15 || maze[x-1][y] != 99)
+    {
+      turn_r();
+      forward_r();
+    }
+    else if (distance_l >= 15 || maze[x+1][y] != 99)
+    {
+      turn_l();
+      forward_l();
+    }
+    else
+    {
+      turn_b();
+      forward_b();
+    }
+  }
+  else
+  {
+    forward();
+  }
+}
+
+void control_r()
+{
+
+}
+
+void control_b()
+{
+
 }
 
 void pid()
@@ -98,6 +181,46 @@ void pid()
 }
 
 void forward()
+{
+  y = y + 1;
+  control_f();
+  pid();           
+  analogWrite(PWM_R,  100 - pid_pwm);  
+  digitalWrite(IN_1, HIGH); 
+  digitalWrite(IN_2,  LOW);  
+                          
+  analogWrite(PWM_L,  100 + pid_pwm);  
+  digitalWrite(IN_3, HIGH);
+  digitalWrite(IN_4,  LOW);
+}
+
+void forward_l()
+{
+  x = x + 1;
+  control_l();
+  pid();           
+  analogWrite(PWM_R,  100 - pid_pwm);  
+  digitalWrite(IN_1, HIGH); 
+  digitalWrite(IN_2,  LOW);  
+                          
+  analogWrite(PWM_L,  100 + pid_pwm);  
+  digitalWrite(IN_3, HIGH);
+  digitalWrite(IN_4,  LOW);
+}
+
+void forward_r()
+{
+  pid();           
+  analogWrite(PWM_R,  100 - pid_pwm);  
+  digitalWrite(IN_1, HIGH); 
+  digitalWrite(IN_2,  LOW);  
+                          
+  analogWrite(PWM_L,  100 + pid_pwm);  
+  digitalWrite(IN_3, HIGH);
+  digitalWrite(IN_4,  LOW);
+}
+
+void forward_b()
 {
   pid();           
   analogWrite(PWM_R,  100 - pid_pwm);  
@@ -175,30 +298,9 @@ void turn_b()
   delay(200);
 }
 
-void control()
-{
-  if(distance_f <=10)
-  {
-    if(distance_r >= 15)
-    {
-      turn_r();
-    }
-    else if(distance_r >= 15)
-    {
-      turn_l();
-    }
-    else
-    {
-      turn_b();
-    }
-  }
-  else
-  {
-    forward();
-  }
-}
+
 
 void loop() 
 {
-  control();
+  forward();
 }
