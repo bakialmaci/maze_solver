@@ -15,10 +15,10 @@ int maze [14][14] = {
   {99,99,99,99,99,99,99,99,99,99,99,99,99,99}
   };
                                                 //Motors pin_IO
-#define IN_1 10
-#define IN_2 11   
-#define IN_3 9
-#define IN_4 8
+#define IN_1 11
+#define IN_2 10   
+#define IN_3 8
+#define IN_4 9
 
 #define PWM_R 5   
 #define PWM_L 6    
@@ -31,14 +31,20 @@ int maze [14][14] = {
 #define ECHOPIN_L 2
 
                                                //FACILITATING DEFINITIONS
-#define TURN_DELAY 600
+#define TURN_DELAY 400
 #define PWM 100
 
-                                                //Variables
+float t=0;                                           //Variables
+int hata=0;
 long cycle;
 long distance_f;
 long distance_r;
 long distance_l;
+
+long distance_fp;
+long distance_rp;
+long distance_lp;
+
 int pid_pwm;
 
 int x = 1;
@@ -75,6 +81,7 @@ void f_sensor()
   digitalWrite(TRIGPIN_F, LOW);  
   cycle   = pulseIn(ECHOPIN_F, HIGH); 
   distance_f = cycle /29.1/2;
+  distance_fp = distance_f%20; // I am try to prevent blocking pid.
 }
 
 void r_sensor()
@@ -86,7 +93,7 @@ void r_sensor()
   digitalWrite(TRIGPIN_R, LOW);  
   cycle   = pulseIn(ECHOPIN_R, HIGH); 
   distance_r = cycle /29.1/2;
-  distance_r = distance_r%20; // I am try to blocking pid.
+  distance_rp = distance_r%25; // I am try to prevent blocking pid.
 }
 
 void l_sensor()
@@ -98,7 +105,7 @@ void l_sensor()
   digitalWrite(TRIGPIN_L, LOW);  
   cycle   = pulseIn(ECHOPIN_L, HIGH); 
   distance_l = cycle /29.1/2;
-  distance_l = distance_l%20; // I am try to blocking pid.
+  distance_lp = distance_l%25; // I am try to prevent blocking pid.
 }
 
 
@@ -106,26 +113,30 @@ void l_sensor()
 
 void control_f()
 {
-  if(distance_f >= 10 && maze[x][y+1] != 99)
+  f_sensor();
+  r_sensor();
+  l_sensor();
+  
+  if(distance_f >= 10) //&& maze[y+1][y] != 99)
   {
-    y+=1;
-    maze[x][y] += 1;
-    
+    /*y+=1;
+    maze[x][y] += 1;*/
+
     forward();
   }
-  else if (distance_r >= 10 && maze[x-1][y] != 99)
+  else if (distance_r >= 15) //&& maze[x-1][y] != 99)
   {
-    x-=1;
-    maze[x][y] += 1;
+    /*x-=1;
+    maze[x][y] += 1;*/
     
     handbrake();
     turn_r();
     forward_r();
   }
-  else if (distance_l >= 10 && maze[x+1][y] != 99)
+  else if (distance_l >= 15 ) //&& maze[x+1][y] != 99)
   {
-    x+=1;
-    maze[x][y] += 1;
+    /*x+=1;
+    maze[x][y] += 1;*/
     
     handbrake();
     turn_l();
@@ -133,35 +144,40 @@ void control_f()
   }
   else
   {
-    maze[x][y] = 99;
+    //maze[x][y] = 99;
     
     handbrake();
+    turn_b();
     forward_b();
   }
 }
 
 void control_l()
 {
-  if(distance_f >= 10 && maze[x+1][y] != 99)
+    f_sensor();
+  r_sensor();
+  l_sensor();
+  
+  if(distance_f >= 10) //&& maze[x+1][y] != 99)
   {
-    x+=1;
-    maze[x][y] += 1;
+    /*x+=1;
+    maze[x][y] += 1;*/
     
     forward_l();
   }
-  else if (distance_r >= 10 && maze[x][y+1] != 99)
+  else if (distance_r >= 15) //&& maze[x][y+1] != 99)
   {
-    y+=1;
-    maze[x][y] += 1;
+    /*y+=1;
+    maze[x][y] += 1;*/
     
     handbrake();
     turn_r();
     forward();
   }
-  else if (distance_l >= 10 && maze[x][y-1] != 99)
+  else if (distance_l >= 15) //&& maze[x][y-1] != 99)
   {
-    y-=1;
-    maze[x][y] += 1;
+    /*y-=1;
+    maze[x][y] += 1;*/
     
     handbrake();
     turn_l();
@@ -178,26 +194,30 @@ void control_l()
 
 void control_r()
 {
-  if(distance_f >= 10 && maze[x-1][y] != 99)
+  f_sensor();
+  r_sensor();
+  l_sensor();
+  
+  if(distance_f >= 10 )//&& maze[x-1][y] != 99)
   {
-    x-=1;
-    maze[x][y] += 1;
+    /*x-=1;
+    maze[x][y] += 1;*/
     
     forward_r();
   }
-  else if (distance_r >= 10 && maze[x][y-1] != 99)
+  else if (distance_r >= 10 )//&& maze[x][y-1] != 99)
   {
-    y-=1;
-    maze[x][y] += 1;
+   /* y-=1;
+    maze[x][y] += 1;*/
     
     handbrake();
     turn_r();
     forward_b();
   }
-  else if (distance_l >= 10 && maze[x][y+1] != 99)
+  else if (distance_l >= 10)// && maze[x][y+1] != 99)
   {
-    y+=1;
-    maze[x][y] += 1;
+    /*y+=1;
+    maze[x][y] += 1;*/
     
     handbrake();
     turn_l();
@@ -212,17 +232,21 @@ void control_r()
 
 void control_b()
 {
+    f_sensor();
+  r_sensor();
+  l_sensor();
+  
   if(distance_f >= 10 && maze[x][y-1] != 99)
   {
-    y-=1;
-    maze[x][y] += 1;
+    /*y-=1;
+    maze[x][y] += 1;*/
     
     forward_b();
   }
   else if (distance_r >= 10 && maze[x+1][y] != 99)
   {
-    x+=1;
-    maze[x][y] += 1;
+    /*x+=1;
+    maze[x][y] += 1;*/
     
     handbrake();
     turn_r();
@@ -230,8 +254,8 @@ void control_b()
   }
   else if (distance_l >= 10 && maze[x-1][y] != 99)
   {
-    x-=1;
-    maze[x][y] += 1;
+   /* x-=1;
+    maze[x][y] += 1;*/
     
     handbrake();
     turn_l();
@@ -250,59 +274,65 @@ void pid()
 {
   l_sensor();
   r_sensor();
-  pid_pwm = (distance_l - distance_r)*5;
+  t=millis();
+  //int pid2= ((distance_lp-distance_rp)-(hata))/t;
+  pid_pwm = ((distance_lp - distance_rp)*6);//+(pid2*0.6);
+  //hata=distance_lp-distance_rp;
+
 }
 
 void forward()
 {
-  control_f();
   pid();           
-  analogWrite(PWM_R,  PWM - pid_pwm);  
+  analogWrite(PWM_R,  PWM + pid_pwm);  
   digitalWrite(IN_1, HIGH); 
   digitalWrite(IN_2,  LOW);  
                           
-  analogWrite(PWM_L,  PWM + pid_pwm);  
+  analogWrite(PWM_L,  PWM - pid_pwm);  
   digitalWrite(IN_3, HIGH);
   digitalWrite(IN_4,  LOW);
+  control_f();
+
 }
 
 void forward_l()
 {
-  control_l();
   pid();           
-  analogWrite(PWM_R,  PWM - pid_pwm);  
+  analogWrite(PWM_R,  PWM + pid_pwm);  
   digitalWrite(IN_1, HIGH); 
   digitalWrite(IN_2,  LOW);  
                           
-  analogWrite(PWM_L,  PWM + pid_pwm);  
+  analogWrite(PWM_L,  PWM - pid_pwm);  
   digitalWrite(IN_3, HIGH);
   digitalWrite(IN_4,  LOW);
+  control_l();
 }
 
 void forward_r()
 {
-  control_r();
   pid();           
-  analogWrite(PWM_R,  PWM - pid_pwm);  
+  analogWrite(PWM_R,  PWM + pid_pwm);  
   digitalWrite(IN_1, HIGH); 
   digitalWrite(IN_2,  LOW);  
                           
-  analogWrite(PWM_L,  PWM + pid_pwm);  
+  analogWrite(PWM_L,  PWM - pid_pwm);  
   digitalWrite(IN_3, HIGH);
   digitalWrite(IN_4,  LOW);
+  control_r();
 }
 
 void forward_b()
 {
-  control_b();
+  
   pid();           
-  analogWrite(PWM_R,  PWM - pid_pwm);  
+  analogWrite(PWM_R,  PWM + pid_pwm);  
   digitalWrite(IN_1, HIGH); 
   digitalWrite(IN_2,  LOW);  
                           
-  analogWrite(PWM_L,  PWM + pid_pwm);  
+  analogWrite(PWM_L,  PWM - pid_pwm);  
   digitalWrite(IN_3, HIGH);
   digitalWrite(IN_4,  LOW);
+  control_b();
 }
 
 void handbrake()
@@ -328,7 +358,7 @@ void handbrake()
 
                                                     //TURNS
 
-void turn_r()
+void turn_l()
 {
   analogWrite(PWM_R,  PWM);  
   digitalWrite(IN_1, HIGH); 
@@ -357,7 +387,7 @@ void turn_r()
   digitalWrite(IN_4,  LOW);
 }
 
-void turn_l()
+void turn_r()
 {
   analogWrite(PWM_R,  PWM);  
   digitalWrite(IN_1, LOW); 
