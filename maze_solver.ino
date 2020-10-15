@@ -791,12 +791,11 @@ void turn_r()
   delay(250);
 }
 
-void turn_b()
-{
-  turn_l();
-  delay(200);
-  turn_l();
-  delay(200);
+void turn_b(){
+  for(int i = 0; i <= 1; i++){
+    turn_l();
+    delay(200); 
+  }
 }
 
 void led() {
